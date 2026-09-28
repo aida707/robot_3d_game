@@ -1,0 +1,7 @@
+node_modules
+dist
+*.local
+.DS_Store
+
+# 원본 에셋 팩 보관용 (게임에 쓰는 파일은 public/에 복사되어 있음, 원본은 다시 받을 수 있음)
+asset_backup/
