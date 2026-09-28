@@ -258,6 +258,7 @@
 | UI | HTML/CSS 오버레이 (3D 캔버스 위) |
 | 사운드 | Web Audio API 절차적 합성 (`src/audio/sfx.ts`) |
 | 저장 | localStorage (`mech-tactics-save-v1`) |
+| 배포 | GitHub Pages (https://aida707.github.io/robot_3d_game/). `main`에 push하면 GitHub Actions가 빌드·배포. 서버 없는 정적 사이트이며 저장은 각 플레이어 브라우저에 남음 |
 | 데이터 | `src/data/*.ts`: 무기·적·스테이지·모듈·연구·칩을 코드와 분리해 밸런스 조정 |
 | 스탯 계산 | `src/game/stats.ts`: 강화·연구·모듈을 반영한 최종 무기/기체 스탯, 전력 계산 |
 | 밸런스 도구 | `src/dev/balance.ts`: 개발 서버 전용 헤드리스 전투 시뮬레이터 (12절) |

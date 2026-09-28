@@ -10,7 +10,15 @@ Three.js + Vite + TypeScript로 만든 웹 3D 로봇 자동전투 게임.
 ## 명령
 - `npm install`: 의존성 설치
 - `npm run dev`: 개발 서버 (http://localhost:5173)
-- `npm run build`: 타입 체크 + 프로덕션 빌드
+- `npm run build`: 타입 체크 + 프로덕션 빌드 (기준 경로 `/robot_3d_game/`)
+- `npm run preview`: 빌드 결과를 GitHub Pages와 같은 경로로 띄워 확인 (http://localhost:4173/robot_3d_game/)
+
+## 저장소와 배포
+- GitHub: https://github.com/aida707/robot_3d_game (브랜치 `main`)
+- `main`에 push하면 `.github/workflows/deploy.yml`이 빌드해서 GitHub Pages에 배포한다 → https://aida707.github.io/robot_3d_game/
+- 기준 경로는 `vite.config.ts`의 `base`에서 빌드·preview일 때만 `/robot_3d_game/`. 에셋 경로는 반드시 `import.meta.env.BASE_URL`을 붙인다 (절대 경로 `/...` 금지).
+- `asset_backup/`(원본 에셋 팩)은 저장소에 올리지 않는다.
+- 커밋·push는 사용자가 요청할 때만 한다.
 
 ## 구조
 - `src/main.ts`: 화면 흐름 (스테이지 선택 → 브리핑 → 격납고 → 전투 → 결과)

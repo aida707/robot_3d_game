@@ -32,6 +32,10 @@ function modelList(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command, isPreview }) => ({
+  // GitHub Pages는 https://aida707.github.io/robot_3d_game/ 처럼 하위 경로에서 서비스되므로
+  // 빌드(와 빌드 결과를 띄우는 preview)에서만 기준 경로를 맞춘다. 개발 서버는 그대로 / 를 쓴다.
+  // 에셋은 코드에서 import.meta.env.BASE_URL을 붙여 불러오므로 이 값만 바꾸면 된다.
+  base: command === 'build' || isPreview ? '/robot_3d_game/' : '/',
   plugins: [modelList()],
-});
+}));
