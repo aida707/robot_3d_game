@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Arena } from '../engine/Arena';
-import { buildEnemy, type EnemyModel, type RobotModel } from '../engine/models';
+import { buildEnemy, makeShieldMaterial, setShieldOpacity, type EnemyModel, type RobotModel } from '../engine/models';
 import { Effects, makeBeam, setBeam } from '../engine/effects';
 import { HealthBar } from '../engine/HealthBar';
 import { DamageNumbers, type NumberKind } from '../engine/DamageNumbers';
@@ -222,16 +222,7 @@ export class Battle {
     robot.group.updateMatrixWorld(true);
 
     if (this.stats.shield > 0) {
-      this.shieldBubble = new THREE.Mesh(
-        new THREE.SphereGeometry(2.2, 24, 16),
-        new THREE.MeshBasicMaterial({
-          color: 0x4fb3ff,
-          transparent: true,
-          opacity: 0.2,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        }),
-      );
+      this.shieldBubble = new THREE.Mesh(new THREE.SphereGeometry(2.2, 24, 16), makeShieldMaterial(0x4fb3ff));
       this.shieldBubble.position.y = 1.6;
       robot.group.add(this.shieldBubble);
     }
@@ -463,7 +454,7 @@ export class Battle {
       this.shieldPulse = Math.max(0, this.shieldPulse - dt * 4);
       const ratio = this.shield / s.shield;
       this.shieldBubble.visible = ratio > 0.02;
-      (this.shieldBubble.material as THREE.MeshBasicMaterial).opacity = 0.05 + ratio * 0.15 + this.shieldPulse * 0.3;
+      setShieldOpacity(this.shieldBubble, 0.05 + ratio * 0.15 + this.shieldPulse * 0.3);
     }
 
     const g = this.robot.group;
@@ -663,8 +654,13 @@ export class Battle {
           this.fireBullet(w.def, muzzlePos, targets[0]);
           break;
         case 'missile':
-          // 서로 다른 적에게 한 발씩만 쏜다: 적이 적으면 미사일도 적게 나간다 (광역 무기의 약점)
-          for (const t of targets) this.fireMissile(w.def, muzzlePos, t);
+          if (w.def.salvo) {
+            // 로켓 런처: 조준한 적 하나에 전부 쏜다
+            for (let i = 0; i < w.def.burst; i++) this.fireMissile(w.def, muzzlePos, targets[0]);
+          } else {
+            // 서로 다른 적에게 한 발씩만 쏜다: 적이 적으면 미사일도 적게 나간다 (광역 무기의 약점)
+            for (const t of targets) this.fireMissile(w.def, muzzlePos, t);
+          }
           break;
         case 'rail':
           this.fireRail(w.def, muzzlePos, targets[0]);
@@ -1033,9 +1029,8 @@ export class Battle {
       if (e.model.shield) {
         e.shieldPulse = Math.max(0, e.shieldPulse - dt * 4);
         const ratio = e.shield / e.maxShield;
-        const mat = e.model.shield.material as THREE.MeshBasicMaterial;
         e.model.shield.visible = ratio > 0.02;
-        mat.opacity = 0.08 + ratio * 0.25 + e.shieldPulse * 0.35;
+        setShieldOpacity(e.model.shield, 0.08 + ratio * 0.25 + e.shieldPulse * 0.35);
         e.model.shield.scale.setScalar(1 + e.shieldPulse * 0.08);
       }
       if (def.flying || def.model === 'drone' || def.model === 'shielder') {

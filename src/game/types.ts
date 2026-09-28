@@ -13,6 +13,8 @@ export interface WeaponDef {
   targets: TargetLayer;
   /** 전방위 무기: 로봇이 바라보는 방향과 상관없이 쏜다 (기본은 전방 120°만) */
   omni?: boolean;
+  /** 일제 사격: burst 발을 모두 조준한 한 적에게 쏜다 (로켓 런처). 없으면 미사일은 서로 다른 적에게 한 발씩 */
+  salvo?: boolean;
   /** 이보다 가까운 적은 조준하지 못한다 (박격포) */
   minRange?: number;
   /** 부채꼴 공격 각도(도). 화염방사기 */

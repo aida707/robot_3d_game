@@ -4,7 +4,7 @@ import type { ChipOption, MoveChip, ResearchDef, TargetChip } from '../game/type
 export const RESEARCH: ResearchDef[] = [
   { id: 'ap_rounds', branch: '탄도학', name: '철갑탄', desc: '실탄 무기의 장갑 관통 +25%p', cost: 2, requires: null },
   { id: 'rapid_feed', branch: '탄도학', name: '고속 급탄', desc: '실탄 무기의 연사 속도 +20%', cost: 4, requires: 'ap_rounds' },
-  { id: 'he_warhead', branch: '폭발물', name: '고폭 탄두', desc: '폭발 반경 +30%, 폭발 피해 +10%', cost: 2, requires: null },
+  { id: 'he_warhead', branch: '폭발물', name: '고폭 탄두', desc: '폭발 반경 +30%, 폭발 피해 +10%, 로켓 런처 구매 가능', cost: 2, requires: null },
   { id: 'cluster', branch: '폭발물', name: '다탄두', desc: '미사일 포드 발사 수 +2', cost: 4, requires: 'he_warhead' },
   { id: 'mortar_tech', branch: '폭발물', name: '박격포 탄도학', desc: '박격포 구매 가능', cost: 4, requires: 'he_warhead' },
   { id: 'flak_tech', branch: '대공', name: '대공 사격 통제', desc: '플랙 포 구매 가능', cost: 2, requires: null },

@@ -43,7 +43,8 @@ export function resolveWeapon(save: SaveData, id: string): WeaponDef {
     w.aoeRadius *= 1.3;
     w.damage *= 1.1;
   }
-  if (w.fireMode === 'missile' && has('cluster')) w.burst += 2;
+  // 다탄두는 어깨 미사일 포드 전용 (로켓 런처는 일제 사격이라 +2발이면 너무 강하다)
+  if (w.fireMode === 'missile' && !w.salvo && has('cluster')) w.burst += 2;
   if (w.damageType === 'energy' && has('focus_lens')) {
     w.damage *= 1.25;
     w.range += 2;

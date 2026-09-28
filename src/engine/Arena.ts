@@ -108,6 +108,8 @@ export class Arena {
 
     el.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      // 드래그·더블클릭이 화면 위 글자(피해 숫자 등)를 선택하지 않게 막는다
+      e.preventDefault();
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try {
         el.setPointerCapture(e.pointerId);

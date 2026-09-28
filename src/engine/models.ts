@@ -77,6 +77,16 @@ export function buildWeapon(id: string): THREE.Group {
       }
       muzzle.position.set(0, 0, 0.45);
       break;
+    case 'rocket':
+      // 팔에 거는 2연장 발사관
+      g.add(box(0.4, 0.3, 0.6, dark, 0, -0.05, 0));
+      for (const x of [-0.11, 0.11]) {
+        g.add(cylZ(0.11, 0.95, metal, x, 0.12, 0.35));
+        g.add(cylZ(0.075, 0.04, light, x, 0.12, 0.83));
+      }
+      g.add(box(0.14, 0.12, 0.2, light, 0, -0.05, 0.32));
+      muzzle.position.set(0, 0.12, 0.9);
+      break;
     case 'railgun':
       g.add(box(0.32, 0.32, 0.9, dark, 0, 0, 0.1));
       g.add(box(0.07, 0.14, 1.9, metal, -0.1, 0, 1.1));
@@ -402,17 +412,44 @@ export interface EnemyModel {
 
 const FLASH_EMISSIVE = new THREE.Color(0x888888);
 
+/**
+ * 실드 구체 재질: 가운데는 거의 투명하고 가장자리만 빛난다(프레넬).
+ * 균일한 반투명이면 위에서 볼 때 파란 원판처럼 보여 안의 모델과 피해 숫자를 가린다.
+ * 밝기는 setShieldOpacity로 바꾼다.
+ */
+export function makeShieldMaterial(color: number): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color(color) }, uOpacity: { value: 0.3 } },
+    vertexShader: /* glsl */ `
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vNormal = normalize(normalMatrix * normal);
+        vView = normalize(-mv.xyz);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main() {
+        float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.5);
+        gl_FragColor = vec4(uColor, uOpacity * (0.08 + rim * 1.6));
+      }`,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+}
+
+export function setShieldOpacity(mesh: THREE.Mesh, opacity: number): void {
+  (mesh.material as THREE.ShaderMaterial).uniforms.uOpacity.value = opacity;
+}
+
 function makeShieldSphere(radius: number, y: number): THREE.Mesh {
-  const shield = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 20, 14),
-    new THREE.MeshBasicMaterial({
-      color: 0x4fb3ff,
-      transparent: true,
-      opacity: 0.3,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    }),
-  );
+  const shield = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 14), makeShieldMaterial(0x4fb3ff));
   shield.position.y = y;
   return shield;
 }

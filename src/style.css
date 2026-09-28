@@ -637,12 +637,21 @@ p {
   inset: 0;
   pointer-events: none;
   overflow: hidden;
+  /* 카메라를 드래그·더블클릭할 때 숫자가 텍스트로 선택되어 파란 배경이 생기지 않게 한다 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dmg-layer ::selection {
+  background: transparent;
 }
 
 .dmg {
   position: absolute;
   left: 0;
   top: 0;
+  background: transparent;
   font-weight: 800;
   font-size: 15px;
   color: #fff;
