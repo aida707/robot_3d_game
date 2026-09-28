@@ -11,6 +11,8 @@ export interface WeaponDef {
   /** 구매 전에 필요한 연구 id */
   research?: string;
   targets: TargetLayer;
+  /** 전방위 무기: 로봇이 바라보는 방향과 상관없이 쏜다 (기본은 전방 120°만) */
+  omni?: boolean;
   /** 이보다 가까운 적은 조준하지 못한다 (박격포) */
   minRange?: number;
   /** 부채꼴 공격 각도(도). 화염방사기 */
@@ -166,6 +168,8 @@ export interface Settings {
   damageNumbers: boolean;
   /** 효과음 샘플 사용 (끄면 합성음) */
   sfxSamples: boolean;
+  /** 상체만 조준 방향으로 돌리고 다리는 이동 방향을 향함 (연출 전용, 끄면 몸 전체가 회전) */
+  torsoAim: boolean;
 }
 
 /** 강화·연구·모듈을 모두 반영한 로봇 전투 스탯 */

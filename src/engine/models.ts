@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { SLOTS } from '../data/robot';
 import { WEAPON_MAP } from '../data/weapons';
 import { MODULE_MAP } from '../data/modules';
@@ -185,6 +185,8 @@ export interface RobotModel {
   playSpecial(kind: 'victory' | 'death'): boolean;
   /** 특수 애니메이션을 끝내고 기본 자세로 */
   resetPose(): void;
+  /** 다리(몸 전체) 방향에 대한 상체 비틀림(라디안). 0이면 정면. 연출 전용 */
+  setTorsoYaw(yaw: number): void;
 }
 
 const SPECIAL_CLIPS = { victory: /dance|victory|cheer|yes/i, death: /death|die/i };
@@ -256,10 +258,32 @@ export function buildModelRobot(inst: ModelInstance, asset: ModelAsset): RobotMo
 
   let special: THREE.AnimationAction | null = null;
 
+  // 상체 비틀기: 애니메이션이 매 프레임 뼈대 자세를 덮어쓰므로, 갱신 직후에 월드 Y축 회전을 덧붙인다.
+  const torso = asset.torsoBone ? (inst.model.getObjectByName(asset.torsoBone) ?? null) : null;
+  const torsoBase = torso?.quaternion.clone() ?? null;
+  let torsoYaw = 0;
+  const parentQ = new THREE.Quaternion();
+  const twistQ = new THREE.Quaternion();
+  const axis = new THREE.Vector3();
+  const applyTwist = () => {
+    if (!torso || !torso.parent) return;
+    if (!inst.mixer && torsoBase) torso.quaternion.copy(torsoBase); // 애니메이션이 없으면 누적되지 않게 되돌린 뒤 적용
+    if (Math.abs(torsoYaw) < 1e-4) return;
+    // 월드 Y축을 부모 뼈대 좌표계로 옮겨, 그 축을 중심으로 돌린다
+    torso.parent.getWorldQuaternion(parentQ);
+    axis.set(0, 1, 0).applyQuaternion(parentQ.invert()).normalize();
+    twistQ.setFromAxisAngle(axis, torsoYaw);
+    torso.quaternion.premultiply(twistQ);
+  };
+
   return {
     group,
     weaponMeshes,
     setLoadout,
+    setTorsoYaw(yaw) {
+      torsoYaw = yaw;
+      if (!inst.mixer) applyTwist();
+    },
     setHitFlash(v) {
       setFlash(inst.flashables, v > 0.01 ? HIT_RED.setRGB(v * 0.9, v * 0.15, v * 0.05) : null);
     },
@@ -292,6 +316,7 @@ export function buildModelRobot(inst: ModelInstance, asset: ModelAsset): RobotMo
     },
     update(dt) {
       inst.mixer?.update(dt);
+      if (inst.mixer) applyTwist();
     },
   };
 }
@@ -351,6 +376,10 @@ function buildProceduralRobot(): RobotModel {
     update() {},
     playSpecial: () => false,
     resetPose() {},
+    setTorsoYaw(yaw) {
+      // 기본 로봇은 상체 그룹(무기 포함)만 돌린다
+      upper.rotation.y = yaw;
+    },
   };
 }
 
@@ -622,7 +651,7 @@ function buildProceduralEnemy(def: EnemyDef): EnemyModel {
     case 'boss': {
       const mat = std(def.color, { metalness: 0.6, roughness: 0.4 });
       const body = new THREE.Group();
-      // 원반형 동체 (원반 요새)
+      // 원반형 동체 (디스크 워커)
       const shell = shadowed(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), mat));
       shell.scale.set(2.6, 0.55, 2.6);
       shell.position.y = 2.4;

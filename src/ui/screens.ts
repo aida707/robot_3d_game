@@ -3,7 +3,7 @@ import { ENEMY_MAP } from '../data/enemies';
 import { WEAPONS, WEAPON_MAP } from '../data/weapons';
 import { MODULES, MODULE_MAP } from '../data/modules';
 import { MOVE_CHIPS, RESEARCH, RESEARCH_MAP, TARGET_CHIPS } from '../data/research';
-import { SLOTS } from '../data/robot';
+import { ROBOT, SLOTS } from '../data/robot';
 import { ROBOT_SKINS } from '../data/assets';
 import {
   MAX_WEAPON_LEVEL,
@@ -138,6 +138,7 @@ function weaponRows(w: WeaponDef): [string, string | number][] {
     ['사거리', w.minRange ? `${w.minRange}~${num(w.range)}` : num(w.range)],
     ['속성', DAMAGE_LABEL[w.damageType]],
     ['조준', TARGET_LABEL[w.targets]],
+    ['사격 방향', w.omni ? '전방위' : `전방 ${ROBOT.fireArc}°`],
   ];
   if (w.pierce) rows.push(['장갑 관통', `${Math.round(w.pierce * 100)}%`]);
   if (w.aoeRadius) rows.push(['폭발 반경', num(w.aoeRadius)]);
@@ -202,6 +203,7 @@ export function renderStageSelect(
           <label class="check"><input type="checkbox" data-setting="muted" ${s.muted ? 'checked' : ''} /> 전체 음소거</label>
           <label class="check"><input type="checkbox" data-setting="sfxSamples" ${s.sfxSamples ? 'checked' : ''} /> 효과음 샘플 사용 (끄면 합성음)</label>
           <label class="check"><input type="checkbox" data-setting="damageNumbers" ${s.damageNumbers ? 'checked' : ''} /> 피해 숫자 표시</label>
+          <label class="check"><input type="checkbox" data-setting="torsoAim" ${s.torsoAim ? 'checked' : ''} /> 상체만 조준 방향으로 회전 (끄면 몸 전체 회전)</label>
           <p class="note">시점 조작: 드래그로 회전, 휠(휴대폰은 두 손가락)로 확대·축소, 더블클릭으로 초기화</p>
         </details>
         <button class="link reset">진행 초기화</button>
@@ -405,7 +407,7 @@ export function renderHangar(root: HTMLElement, stage: StageDef, save: SaveData,
   const statParts = [`체력 ${robotStats.maxHp}`];
   if (robotStats.shield) statParts.push(`실드 ${robotStats.shield}`);
   if (robotStats.repair) statParts.push(`수리 ${robotStats.repair}/초`);
-  statParts.push(`이동 속도 ${robotStats.speed}`);
+  statParts.push(`이동 속도 ${robotStats.speed}`, `회전 ${ROBOT.turnSpeed}°/초`);
 
   const tabs: [HangarTab, string][] = [
     ['weapons', '무기고'],

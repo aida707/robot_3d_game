@@ -69,6 +69,18 @@ function layerMatches(layer: TargetLayer, e: { def: EnemyDef }): boolean {
   return layer === 'both' || (layer === 'air') === !!e.def.flying;
 }
 
+/** a에서 b로 가는 가장 짧은 각도 차 (-π~π) */
+function angleDiff(a: number, b: number): number {
+  const d = a - b;
+  return Math.atan2(Math.sin(d), Math.cos(d));
+}
+
+/** current에서 target 쪽으로 최대 maxStep만큼 회전 */
+function turnToward(current: number, target: number, maxStep: number): number {
+  const d = angleDiff(target, current);
+  return Math.abs(d) <= maxStep ? target : current + Math.sign(d) * maxStep;
+}
+
 function lerpAngle(a: number, b: number, t: number): number {
   let d = (b - a) % (Math.PI * 2);
   if (d > Math.PI) d -= Math.PI * 2;
@@ -160,6 +172,14 @@ export class Battle {
   private moveChip: MoveChip;
   /** 이번 스텝에 로봇이 움직였는지 (칩 능력 판정용) */
   private robotMoving = false;
+  /** 조준 방향(게임 규칙): 전방 무기는 이 방향 ±fireArc/2 안의 적만 쏜다 */
+  private aimYaw = 0;
+  /** 다리 방향(연출): 상체 회전을 켰을 때만 조준 방향과 따로 움직인다 */
+  private legsYaw = 0;
+  /** 발밑의 전방 사격 각도 표시 */
+  private arcIndicator: THREE.Mesh | null = null;
+  /** 상체만 조준 방향으로 돌리는 연출 (설정에서 켜고 끈다) */
+  static torsoAim = true;
   private hp: number;
   private shield: number;
   private lastHitAt = -Infinity;
@@ -237,6 +257,18 @@ export class Battle {
       });
       minRange = Math.min(minRange, def.range);
     }
+    // 전방 무기가 있으면 발밑에 사격 각도를 옅게 표시한다
+    if (this.weapons.some((w) => !w.def.omni)) {
+      const half = THREE.MathUtils.degToRad(ROBOT.fireArc / 2);
+      // RingGeometry는 +X에서 시작하는 XY 평면 호 → 눕히면 θ=-π/2가 +Z(정면)
+      const geo = new THREE.RingGeometry(2.1, 2.5, 32, 1, -Math.PI / 2 - half, half * 2).rotateX(-Math.PI / 2);
+      this.arcIndicator = new THREE.Mesh(
+        geo,
+        new THREE.MeshBasicMaterial({ color: 0x5ce1ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      arena.scene.add(this.arcIndicator);
+    }
+
     const baseRange = Number.isFinite(minRange) ? minRange : 10;
     this.preferredRange = baseRange * (this.moveChip === 'charge' ? 0.35 : 0.8);
 
@@ -296,6 +328,12 @@ export class Battle {
     }
     this.effects.clear();
     this.numbers?.clear();
+    if (this.arcIndicator) {
+      scene.remove(this.arcIndicator);
+      this.arcIndicator.geometry.dispose();
+      (this.arcIndicator.material as THREE.Material).dispose();
+    }
+    this.robot.setTorsoYaw(0);
     if (this.shieldBubble) {
       this.robot.group.remove(this.shieldBubble);
       this.shieldBubble.geometry.dispose();
@@ -347,6 +385,10 @@ export class Battle {
     this.finished = true;
     this.endTimer = victory ? 1.5 : 2.5;
     for (const w of this.weapons) if (w.beam) w.beam.visible = false;
+    if (this.arcIndicator) this.arcIndicator.visible = false;
+    // 결과 연출(승리 춤 등)은 정면 자세로
+    this.robot.group.rotation.y = this.aimYaw;
+    this.robot.setTorsoYaw(0);
     this.robot.animateWalk(0, 0);
     const ratio = this.hp / this.stats.maxHp;
     const stars = victory ? (ratio >= 0.6 ? 3 : ratio >= 0.3 ? 2 : 1) : 0;
@@ -428,6 +470,7 @@ export class Battle {
     const p = g.position;
     const nearest = this.nearestEnemy(p);
     let moving = false;
+    let moveYaw: number | null = null;
 
     if (nearest) {
       const toEnemy = new THREE.Vector3(nearest.pos.x - p.x, 0, nearest.pos.z - p.z);
@@ -456,21 +499,93 @@ export class Battle {
       }
       if (move.lengthSq() > 1e-4) {
         const speed = this.stats.speed * (this.moveChip === 'charge' ? MOVE_EFFECTS.chargeSpeed : 1);
-        p.addScaledVector(move.normalize(), speed * dt);
+        move.normalize();
+        p.addScaledVector(move, speed * dt);
         moving = true;
+        moveYaw = Math.atan2(move.x, move.z);
       }
-      g.rotation.y = lerpAngle(g.rotation.y, Math.atan2(dirTo.x, dirTo.z), Math.min(1, dt * 8));
     }
 
     const r = Math.hypot(p.x, p.z);
     const maxR = this.arena.radius - 1;
     if (r > maxR) p.multiplyScalar(maxR / r);
 
+    // 조준: 조준 칩이 고른 목표를 향해 초당 turnSpeed도까지만 돈다 (게임 규칙)
+    const aim = this.pickAimTarget(p);
+    if (aim) {
+      const turn = THREE.MathUtils.degToRad(ROBOT.turnSpeed) * dt;
+      this.aimYaw = turnToward(this.aimYaw, Math.atan2(aim.pos.x - p.x, aim.pos.z - p.z), turn);
+    }
+    this.updateBodyFacing(moveYaw, dt);
+
     this.walkAmount += ((moving ? 1 : 0) - this.walkAmount) * Math.min(1, dt * 8);
     if (moving) this.walkPhase += dt * 9;
     this.robot.animateWalk(this.walkPhase, this.walkAmount);
     g.updateMatrixWorld(true);
     this.robotMoving = moving;
+  }
+
+  // ─── 조준 방향 ─────────────────────────────────────────
+
+  /**
+   * 로봇이 바라볼 목표: 전방 무기(전방위가 아닌 무기)가 노릴 수 있는 적 중 조준 칩 우선순위가 가장 높은 적.
+   * 사거리 안에 없으면 가장 가까운 적을 미리 바라본다.
+   */
+  private pickAimTarget(p: THREE.Vector3): Enemy | null {
+    const forward = this.weapons.filter((w) => !w.def.omni);
+    let best: Enemy | null = null;
+    let bestKey = Infinity;
+    let bestD = Infinity;
+    for (const e of this.enemies) {
+      if (!e.alive) continue;
+      const d = this.distanceTo(p, e);
+      const usable = forward.some((w) => layerMatches(w.def.targets, e) && d <= this.rangeOf(w.def) && d >= (w.def.minRange ?? 0));
+      if (!usable) continue;
+      const key = this.priorityKey(e);
+      if (key < bestKey || (key === bestKey && d < bestD)) {
+        best = e;
+        bestKey = key;
+        bestD = d;
+      }
+    }
+    return best ?? this.nearestEnemy(p);
+  }
+
+  /** 전방 사격 각도(정면 ±fireArc/2) 안에 있는지. 적의 크기만큼 여유를 준다 */
+  private inFireArc(e: Enemy): boolean {
+    const p = this.robot.group.position;
+    const dist = Math.hypot(e.pos.x - p.x, e.pos.z - p.z);
+    const diff = Math.abs(angleDiff(Math.atan2(e.pos.x - p.x, e.pos.z - p.z), this.aimYaw));
+    const margin = Math.atan2(e.def.radius, Math.max(0.5, dist));
+    return diff <= THREE.MathUtils.degToRad(ROBOT.fireArc / 2) + margin;
+  }
+
+  /**
+   * 몸 방향 연출 (게임 규칙에는 영향 없음).
+   * 상체 회전을 켜면 다리는 이동 방향(또는 뒷걸음질 방향)을, 상체는 조준 방향을 향한다.
+   * 끄면 몸 전체가 조준 방향을 향한다.
+   */
+  private updateBodyFacing(moveYaw: number | null, dt: number): void {
+    const g = this.robot.group;
+    if (!Battle.torsoAim) {
+      g.rotation.y = this.aimYaw;
+      this.robot.setTorsoYaw(0);
+    } else {
+      if (moveYaw !== null) {
+        // 앞으로 걷기와 뒷걸음질 중 조준 방향에 가까운 쪽 → 상체 비틀림이 90°를 넘지 않는다
+        const back = moveYaw + Math.PI;
+        const target = Math.abs(angleDiff(moveYaw, this.aimYaw)) <= Math.PI / 2 ? moveYaw : back;
+        this.legsYaw = turnToward(this.legsYaw, target, Math.PI * 2 * dt);
+      } else {
+        this.legsYaw = turnToward(this.legsYaw, this.aimYaw, THREE.MathUtils.degToRad(ROBOT.turnSpeed) * dt);
+      }
+      g.rotation.y = this.legsYaw;
+      this.robot.setTorsoYaw(THREE.MathUtils.clamp(angleDiff(this.aimYaw, this.legsYaw), -Math.PI / 2, Math.PI / 2));
+    }
+    if (this.arcIndicator) {
+      this.arcIndicator.position.set(g.position.x, 0.06, g.position.z);
+      this.arcIndicator.rotation.y = this.aimYaw;
+    }
   }
 
   // ─── 이동 칩 능력 ──────────────────────────────────────
@@ -761,7 +876,7 @@ export class Battle {
     const flame = w.def.fireMode === 'flame';
     const p = this.robot.group.position;
     let t = w.beamTarget;
-    if (!t || !t.alive || this.distanceTo(p, t) > this.rangeOf(w.def)) {
+    if (!t || !t.alive || this.distanceTo(p, t) > this.rangeOf(w.def) || (!w.def.omni && !this.inFireArc(t))) {
       t = this.enemiesInRange(p, w.def, 1)[0] ?? null;
     }
     w.beamTarget = t;
@@ -1158,6 +1273,7 @@ export class Battle {
     const minRange = w.minRange ?? 0;
     for (const e of this.enemies) {
       if (!e.alive || !layerMatches(w.targets, e)) continue;
+      if (!w.omni && !this.inFireArc(e)) continue; // 전방 무기는 정면 사격 각도 안만
       const d = this.distanceTo(p, e);
       if (d <= this.rangeOf(w) && d >= minRange) list.push({ e, d, key: this.priorityKey(e) });
     }

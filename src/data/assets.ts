@@ -18,6 +18,8 @@ export interface ModelAsset {
   mountBone?: string;
   /** (로봇 전용) 슬롯별 장착 위치 [x, y, z]. 게임 단위, 로봇 발밑 기준, +z가 정면. 생략하면 크기 비율로 추정 */
   mounts?: Partial<Record<SlotId, [number, number, number]>>;
+  /** (로봇 전용) 상체 회전에 쓸 뼈대. 다리와 따로 조준 방향으로 돌린다 (예: 'Torso') */
+  torsoBone?: string;
 }
 
 /**
@@ -32,7 +34,7 @@ export interface RobotSkin {
   asset: ModelAsset | null;
 }
 
-const mech = (file: string): ModelAsset => ({ url: `models/${file}`, mountBone: 'Chest' });
+const mech = (file: string): ModelAsset => ({ url: `models/${file}`, mountBone: 'Chest', torsoBone: 'Torso' });
 
 export const ROBOT_SKINS: RobotSkin[] = [
   { id: 'rae', name: '레드판다', asset: mech('Mech_RaeTheRedPanda.gltf') },

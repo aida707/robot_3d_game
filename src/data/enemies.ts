@@ -114,8 +114,8 @@ export const ENEMIES: EnemyDef[] = [
   },
   {
     id: 'boss',
-    name: '원반 요새',
-    desc: '원반형 동체를 여러 개의 다리로 받친 거대 보행 요새. 두꺼운 장갑과 에너지 실드를 두르고, 12초마다 동체에서 드론 4기를 내보낸다. 여러 상성을 함께 챙겨야 한다.',
+    name: '디스크 워커',
+    desc: '원반형 동체를 여러 개의 다리로 받친 거대 보행 병기. 두꺼운 장갑과 에너지 실드를 두르고, 12초마다 동체에서 드론 4기를 내보낸다. 여러 상성을 함께 챙겨야 한다.',
     model: 'boss',
     boss: true,
     summon: { enemy: 'drone', count: 4, interval: 12 },
@@ -152,8 +152,8 @@ export const ENEMIES: EnemyDef[] = [
   },
   {
     id: 'boss2',
-    name: '원반 요새 Mk.II',
-    desc: '개량된 원반 요새. 장갑과 실드가 더 두껍고, 14초마다 비행 전투기 3기를 발진시킨다.',
+    name: '디스크 워커 Mk.II',
+    desc: '개량된 디스크 워커. 장갑과 실드가 더 두껍고, 14초마다 비행 전투기 3기를 발진시킨다.',
     model: 'boss',
     elite: true,
     boss: true,

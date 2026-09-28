@@ -5,6 +5,10 @@ export const ROBOT = {
   powerCapacity: 10,
   speed: 3.5,
   radius: 0.9,
+  /** 조준 방향 회전 속도 (도/초) */
+  turnSpeed: 120,
+  /** 전방위가 아닌 무기가 쏠 수 있는 정면 각도 (도, 좌우 절반씩) */
+  fireArc: 120,
 };
 
 export const SLOTS: SlotDef[] = [

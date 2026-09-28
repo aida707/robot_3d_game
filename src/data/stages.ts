@@ -122,8 +122,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: 10,
-    name: '[보스] 원반 요새',
-    briefing: '원반형 동체에 여러 다리가 달린 거대 보행 요새가 출현했다. 장갑과 실드를 모두 갖췄고, 동체에서 드론을 계속 내보낸다.',
+    name: '[보스] 디스크 워커',
+    briefing: '원반형 동체에 여러 다리가 달린 거대 보행 병기 「디스크 워커」가 출현했다. 장갑과 실드를 모두 갖췄고, 동체에서 드론을 계속 내보낸다.',
     hint: '실드를 벗길 에너지 무기, 장갑을 뚫을 관통 무기, 쏟아지는 드론을 쓸어낼 광역 무기. 셋을 모두 챙겨라.',
     reward: 1800,
     waves: [
@@ -185,8 +185,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: 15,
-    name: '[보스] 불멸의 요새',
-    briefing: '원반 요새가 수리 로버 호위대를 거느리고 다시 나타났다. 호위대가 곁에 있는 한 쉽게 무너지지 않는다.',
+    name: '[보스] 불멸의 워커',
+    briefing: '디스크 워커가 수리 로버 호위대를 거느리고 다시 나타났다. 호위대가 곁에 있는 한 쉽게 무너지지 않는다.',
     hint: '호위하는 수리 로버를 먼저 정리할지, 보스에 화력을 집중할지 정하라.',
     reward: 2200,
     hpScale: 1.2,
@@ -243,7 +243,7 @@ export const STAGES: StageDef[] = [
     briefing: '적이 가진 모든 전력이 한꺼번에 투입된다.',
     hint: '모든 상성을 챙길 수는 없다. 두 번째 어깨 슬롯과 코어 모듈까지 총동원하라.',
     reward: 1900,
-    hpScale: 1.15,
+    hpScale: 1.05,
     waves: [
       { enemy: 'drone', count: 15, start: 1, interval: 0.1 },
       { enemy: 'flyer', count: 8, start: 3, interval: 0.3 },
@@ -255,8 +255,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: 20,
-    name: '[보스] 쌍둥이 요새',
-    briefing: '원반 요새 두 기가 비행 편대의 엄호를 받으며 대공세에 나섰다.',
+    name: '[보스] 쌍둥이 워커',
+    briefing: '디스크 워커 두 기가 비행 편대의 엄호를 받으며 대공세에 나섰다.',
     hint: '지금까지 쌓은 모든 연구와 강화를 쏟아부어라. 조준 칩으로 보스에게 화력을 모으는 것도 방법이다.',
     reward: 2600,
     hpScale: 1.15,
@@ -325,8 +325,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: 25,
-    name: '[보스] 원반 요새 Mk.II',
-    briefing: '개량된 원반 요새가 초중전차를 거느리고 나타났다. 비행 전투기를 계속 발진시킨다.',
+    name: '[보스] 디스크 워커 Mk.II',
+    briefing: '개량된 디스크 워커가 초중전차를 거느리고 나타났다. 비행 전투기를 계속 발진시킨다.',
     hint: '더 두꺼운 장갑과 실드, 끝없는 공중 증원. 관통·에너지·대공을 모두 챙기고 보스에게 화력을 모아라.',
     reward: 3000,
     hpScale: 1.1,
@@ -385,7 +385,7 @@ export const STAGES: StageDef[] = [
     briefing: '적의 모든 병종이 마지막 방어선을 향해 동시에 진격한다.',
     hint: '모든 상성이 필요하다. 연구·강화·칩을 총동원하라.',
     reward: 2500,
-    hpScale: 1.0,
+    hpScale: 0.9,
     waves: [
       { enemy: 'juggernaut', count: 2, start: 1, interval: 6 },
       { enemy: 'shielder', count: 3, start: 4, interval: 1 },
@@ -396,8 +396,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: 30,
-    name: '[최종 보스] 요새 함대',
-    briefing: '원반 요새 Mk.II와 원반 요새가 초중전차 호위대를 이끌고 최후의 결전에 나섰다.',
+    name: '[최종 보스] 워커 군단',
+    briefing: '디스크 워커 Mk.II와 디스크 워커가 초중전차 호위대를 이끌고 최후의 결전에 나섰다.',
     hint: '모든 것을 걸어라. 보스에게 화력을 모으는 조준 칩과, 전차를 꿰뚫을 관통 무기가 열쇠다.',
     reward: 4000,
     hpScale: 1.1,

@@ -49,6 +49,7 @@ function persist(): void {
 function applySettings(): void {
   sfx.setVolumes(save.settings);
   sfx.useSamples = save.settings.sfxSamples;
+  Battle.torsoAim = save.settings.torsoAim;
   DamageNumbers.enabled = save.settings.damageNumbers;
 }
 

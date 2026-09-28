@@ -15,7 +15,7 @@ export function defaultSave(): SaveData {
     loadout: { armL: 'autocannon', armR: 'autocannon', shoulder: null, shoulder2: null, core: null },
     chips: { target: 'nearest', move: 'kite' },
     stars: {},
-    settings: { muted: false, sfx: 0.8, music: 0.5, damageNumbers: true, sfxSamples: true },
+    settings: { muted: false, sfx: 0.8, music: 0.5, damageNumbers: true, sfxSamples: true, torsoAim: true },
     robotSkin: DEFAULT_SKIN,
   };
 }
