@@ -942,3 +942,80 @@ p {
     width: 100%;
   }
 }
+
+/* ─── 휴대폰 (세로) ──────────────────────────────── */
+/* 전투 HUD가 화면을 가리지 않도록 두 줄로 압축한다: 1줄 체력·현황, 2줄 버튼 */
+
+@media (max-width: 700px) {
+  .screen.hud {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .hud-row {
+    gap: 6px;
+  }
+
+  .hud-row .panel {
+    padding: 6px 10px;
+  }
+
+  .hud-row .eyebrow,
+  .hud-hint {
+    display: none;
+  }
+
+  .hud-hp {
+    flex: 1 1 55%;
+    width: auto;
+    gap: 3px;
+  }
+
+  .hud-hp .meter {
+    height: 8px;
+  }
+
+  .hud-hp .meter.shield {
+    height: 4px;
+  }
+
+  .hp-text {
+    font-size: 12px;
+  }
+
+  .hud-info {
+    flex: 1 1 35%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .hud-info .remain {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* 버튼 줄은 배경 없이 오른쪽에 작게 */
+  .hud-controls.panel {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    padding: 0;
+    background: none;
+    border: none;
+    backdrop-filter: none;
+  }
+
+  .hud-controls .btn {
+    padding: 4px 9px;
+    font-size: 12px;
+    background: var(--panel);
+  }
+
+  .hud-boss {
+    padding: 4px 10px;
+    gap: 2px;
+  }
+
+  .hud-boss .boss-name {
+    font-size: 11px;
+  }
+}

@@ -120,10 +120,15 @@ function goHangar(id: number): void {
   const stage = stageById(id);
 
   // 변경 후 다시 그리되, 패널 스크롤 위치는 유지한다
+  // 변경 후 다시 그리되, 스크롤 위치는 유지한다.
+  // 넓은 화면은 패널마다 스크롤되고, 좁은 화면(휴대폰)은 화면 전체가 스크롤된다.
   const refresh = () => {
     persist();
+    const screenScroll = ui.querySelector('.screen')?.scrollTop ?? 0;
     const scroll = [...ui.querySelectorAll('.hangar-grid > .panel')].map((p) => p.scrollTop);
     goHangar(id);
+    const screen = ui.querySelector('.screen');
+    if (screen) screen.scrollTop = screenScroll;
     ui.querySelectorAll('.hangar-grid > .panel').forEach((p, i) => (p.scrollTop = scroll[i] ?? 0));
   };
 
@@ -181,6 +186,12 @@ function goHangar(id: number): void {
     onTab: (tab) => {
       hangarTab = tab;
       goHangar(id);
+      // 휴대폰처럼 화면 전체가 스크롤되는 배치에서는 탭을 누르면 무기고/모듈/연구 패널 맨 위로 이동
+      const screen = ui.querySelector<HTMLElement>('.screen');
+      const shop = ui.querySelector<HTMLElement>('.panel.shop');
+      if (screen && shop && screen.scrollHeight > screen.clientHeight) {
+        screen.scrollTop = shop.getBoundingClientRect().top - screen.getBoundingClientRect().top + screen.scrollTop - 8;
+      }
     },
     onSkin: (skinId) => {
       save.robotSkin = skinId;

@@ -36,7 +36,10 @@ export class Arena {
   private target: THREE.Object3D | null = null;
   /** 마우스로 조작한 시점 보정값 */
   private orbit = { yaw: 0, pitch: 0, zoom: 1 };
-  private drag: { x: number; y: number } | null = null;
+  /** 화면에 닿아 있는 포인터(마우스·손가락)들의 현재 위치 */
+  private pointers = new Map<number, { x: number; y: number }>();
+  /** 두 손가락 확대·축소의 직전 손가락 간 거리 */
+  private pinchDistance = 0;
   private camPos = VIEWS.hangar.pos.clone();
   private camLook = VIEWS.hangar.look.clone();
 
@@ -88,32 +91,65 @@ export class Arena {
     this.shake = Math.min(1.2, this.shake + amount);
   }
 
+  /**
+   * 마우스·터치 시점 조작.
+   * - 포인터 하나(마우스 드래그 / 손가락 하나): 회전
+   * - 손가락 둘: 두 손가락 사이 거리 변화로 확대·축소 (마우스 휠과 같은 범위)
+   * - 휠: 확대·축소, 더블클릭(더블탭): 초기화
+   */
   private bindMouse(): void {
     const el = this.renderer.domElement;
     el.style.touchAction = 'none';
+    const pointers = this.pointers;
+    const distance = () => {
+      const [a, b] = [...pointers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+
     el.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      this.drag = { x: e.clientX, y: e.clientY };
-      el.setPointerCapture(e.pointerId);
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        // 합성 이벤트 등 캡처할 수 없는 포인터는 무시
+      }
+      if (pointers.size === 2) this.pinchDistance = distance();
     });
     el.addEventListener('pointermove', (e) => {
-      if (!this.drag) return;
-      this.orbit.yaw -= (e.clientX - this.drag.x) * 0.006;
-      this.orbit.pitch += (e.clientY - this.drag.y) * 0.004;
-      this.drag = { x: e.clientX, y: e.clientY };
+      const prev = pointers.get(e.pointerId);
+      if (!prev) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size >= 2) {
+        // 두 손가락: 벌리면 확대(카메라가 가까워짐), 오므리면 축소
+        const d = distance();
+        if (this.pinchDistance > 0 && d > 0) this.setZoom(this.orbit.zoom * (this.pinchDistance / d));
+        this.pinchDistance = d;
+        return;
+      }
+      this.orbit.yaw -= (e.clientX - prev.x) * 0.006;
+      this.orbit.pitch += (e.clientY - prev.y) * 0.004;
     });
-    const end = () => (this.drag = null);
+    const end = (e: PointerEvent) => {
+      pointers.delete(e.pointerId);
+      // 한 손가락을 떼도 남은 손가락으로 바로 회전이 튀지 않도록 기준 거리만 갱신
+      this.pinchDistance = pointers.size >= 2 ? distance() : 0;
+    };
     el.addEventListener('pointerup', end);
     el.addEventListener('pointercancel', end);
     el.addEventListener(
       'wheel',
       (e) => {
         e.preventDefault();
-        this.orbit.zoom = THREE.MathUtils.clamp(this.orbit.zoom * Math.exp(e.deltaY * 0.001), 0.45, 1.8);
+        this.setZoom(this.orbit.zoom * Math.exp(e.deltaY * 0.001));
       },
       { passive: false },
     );
     el.addEventListener('dblclick', () => this.resetOrbit());
+  }
+
+  private setZoom(zoom: number): void {
+    this.orbit.zoom = THREE.MathUtils.clamp(zoom, 0.45, 1.8);
   }
 
   private viewGoal(): { pos: THREE.Vector3; look: THREE.Vector3 } {

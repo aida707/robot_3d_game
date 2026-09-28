@@ -202,7 +202,7 @@ export function renderStageSelect(
           <label class="check"><input type="checkbox" data-setting="muted" ${s.muted ? 'checked' : ''} /> 전체 음소거</label>
           <label class="check"><input type="checkbox" data-setting="sfxSamples" ${s.sfxSamples ? 'checked' : ''} /> 효과음 샘플 사용 (끄면 합성음)</label>
           <label class="check"><input type="checkbox" data-setting="damageNumbers" ${s.damageNumbers ? 'checked' : ''} /> 피해 숫자 표시</label>
-          <p class="note">전투 중 조작: 드래그로 회전, 휠로 확대, 더블클릭으로 시점 초기화</p>
+          <p class="note">시점 조작: 드래그로 회전, 휠(휴대폰은 두 손가락)로 확대·축소, 더블클릭으로 초기화</p>
         </details>
         <button class="link reset">진행 초기화</button>
       </section>
